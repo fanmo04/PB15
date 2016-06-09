@@ -21,28 +21,31 @@ ch2 = tim.channel(2, Timer.PWM, pin = motor2)
 
 # Get Keypad commands via Bluetooth (based from Task 8)-----------------------------------
 key = ('1', '2', '3', '4', 'U', 'D', 'L', 'R') 
-uart = URAT(6)
-urat.init(9600, bits=8, parity=None, stop=2) 
+uart = UART(6)
+uart.init(9600, bits=8, parity=None, stop=2) 
 while True: 
-  while (urat.any()!=10): #wait we get 10 chars
+  while (uart.any()!=10): #wait we get 10 chars
   	n=uart.any()   
   	command = uart.read(10) #reading the ASCII code for when a button is pressed
   key_index = command[2]-ord('1') 
-  #if U is pressed
-  if (key_index==4 and command[3]==ord('1')):
+  
+  if (command[3]==ord('1')):
+  	test = 'something is pressed'
+  	#if U is pressed
+  	if (key_index==4):
   	action = 'UP pressed'
-  #if D is pressed
-  if (key_index==5 and command[3]==ord('1')):
+  	#if D is pressed
+  	if (key_index==5):
   	action = 'DOWN pressed'
-  #if L is pressed
-  if (key_index==6 and command[3]==ord('1')):
-  	action = 'UP pressed'
-  #if R is pressed
-  if (key_index==7 and command[3]==ord('1')):
-  	action = 'UP pressed'
+  	#if L is pressed
+  	if (key_index==6):
+  	action = 'LEFT pressed'
+  	#if R is pressed
+  	if (key_index==7):
+  	action = 'RIGHT pressed'
   else: 
   	action = 'nothing pressed'
-  print ('Key', key_pressed, '', action)
+  print ('Key ', test, '', action)
 
 
 
