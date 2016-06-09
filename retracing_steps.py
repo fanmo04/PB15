@@ -19,16 +19,34 @@ tim = Timer(2, freq = 1000)
 ch1 = tim.channel(1, Timer.PWM, pin = motor1)
 ch2 = tim.channel(2, Timer.PWM, pin = motor2)
 
-# Get Keypad commands via Bluetooth -----------------------------------
-# (based from Task 8)
+# Get Keypad commands via Bluetooth (based from Task 8)-----------------------------------
 key = ('1', '2', '3', '4', 'U', 'D', 'L', 'R') 
 uart = URAT(6)
 urat.init(9600, bits=8, parity=None, stop=2) 
 while True: 
-  while (urat.any()!=10
+  while (urat.any()!=10): #wait we get 10 chars
+  	n=uart.any()   
+  	command = uart.read(10) #reading the ASCII code for when a button is pressed
+  key_index = command[2]-ord('1') 
+  #if U is pressed
+  if (key_index==4 and command[3]==ord('1')):
+  	action = 'UP pressed'
+  #if D is pressed
+  if (key_index==5 and command[3]==ord('1')):
+  	action = 'DOWN pressed'
+  #if L is pressed
+  if (key_index==6 and command[3]==ord('1')):
+  	action = 'UP pressed'
+  #if R is pressed
+  if (key_index==7 and command[3]==ord('1')):
+  	action = 'UP pressed'
+  else: 
+  	action = 'nothing pressed'
+  print ('Key', key_pressed, '', action)
 
 
-# -----------------------------------------------------------------
+
+# ---------------------------------------------------------------
 
 def stop():
 	ch1.pulse_width_percent(0) # send a pulse of width 0% to motor A
@@ -44,75 +62,3 @@ def drive(speed): # Set direction to forward
 
 	ch1.pulse_width_percent(speed) # send a pulse of width 'speed'% to motor A
 	ch2.pulse_width_percent(speed) # send a pulse of width 'speed'% to motor B
-
-def preventCollision(speed):
-
-	# slowdown
-	while speed > 0:
-		speed = speed - 5
-		ch1.pulse_width_percent(speed)
-	 	ch2.pulse_width_percent(speed)
-		pyb.delay(50) # delay for 50 millisec
-
-	stop() # stop
-
-	# reverse both motor directions
-	A1.low()
-	A2.high()
-	B1.high()
-	B2.low()
-
-	# reversing
-	ch1.pulse_width_percent(40)
-	ch2.pulse_width_percent(40)
-	pyb.delay(750) # delay to allow reverse
-	stop()
-	pyb.delay(750) # pause before next command
-
-	# set motor B (LHS) to forward
-	B1.low()
-	B2.high()
-
-	# turn on the spot
-	ch1.pulse_width_percent(40)
-	ch2.pulse_width_percent(40)
-	pyb.delay(500) # delay to allow the turn
-
-	stop() # stop
-	pyb.delay(500) # pause before continuing
-
-
-drive(speed) # begin the drive - first line initiated on boot-up
-
-while True: # Distance feedback loop
-	# Send a 20usec pulse every 20ms
-	micros.counter(0)	#** reset microsecond counter
-	Trigger.high()
-	pyb.udelay(20)
-	Trigger.low()
-
-	# Wait until echo pulse goes from low to high
-	while Echo.value() == 0:
-		if micros.counter() > TIME_OUT_1: 	#** maximum wait time is 2ms
-			micros.counter(0)					#** reset microsecond counter
-			Trigger.high()	#** trigger ultrasound sensor again!
-			pyb.udelay(20)
-			Trigger.low()
-
-	micros.counter(0)	#** reset microsecond counter
-	# Wait until echo pulse goes from high to low
-	while Echo.value() == 1:   # do nothing
-		pulse_width = micros.counter()		#** record end time of pulse
-		if pulse_width > TIME_OUT_2:		#** check for time out again
-			break			#** waited too long for falling edge
-
-	# Calculate distance from delay duration
-	distance = int((pulse_width/2) / 29)
-	print('Echo pulse width:', pulse_width, 'Distance: ', distance, ' cm')
-
-	if distance <= critdistance:
-		preventCollision(speed)
-	else:
-		drive(50) # run drive(at 50%) func (it will set motor direction)
-
-	pyb.delay(250) # delay by x millisec before repeating loop
